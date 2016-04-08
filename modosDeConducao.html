@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html>
+	<meta charset="UTF-8">
+	<head>
+		<title>Canvas code example</title>
+<style type="text/css">
+.demo select {
+	border: 0 !important;	 /*Removes border*/
+	-webkit-appearance: none;	 /*Removes default chrome and safari style*/
+	-moz-appearance: none; /* Removes Default Firefox style*/
+	appearance: none;
+	background: #0088cc url(img/down-arrow.png) no-repeat 97% center;
+	font-size: 28px;
+	width: 600px; /*Width of select dropdown to give space for arrow image*/
+	text-indent: 0.01px; /* Removes default arrow from firefox*/
+	text-overflow: "";	/*Removes default arrow from firefox*/ /*My custom style for fonts*/
+	color: #FFF;
+	border-radius: 15px;
+	padding: 5px;
+	box-shadow: inset 0 0 5px rgba(000,000,000, 0.5);
+}
+button {
+	padding: 2px 4px;
+	text-align: center;
+}
+.btnExample{
+	border: 0 !important;	
+	padding: 5px;
+	min-width: 70px;
+	color: #FFF;
+	background: #0088cc;
+	font-weight: bold;
+	border: 1px solid #900;
+	box-shadow: inset 0 0 5px rgba(000,000,000, 0.5);
+}
+.btnExample:hover {
+	color: #FFF;
+	background: #0099FF;
+}
+
+	
+</style>
+
+	</head>
+<body onload="init()">
+	<table>
+		<thead>
+			<tr>
+				<th align="center" colspan="7">
+					<h2>Corrente no indutor:</h2>
+					<h3>Fronteira entre os modos de operação</h3>
+				</th>
+			</tr>
+		</thead>
+		<tbody id="tableBody">
+		
+			
+			<tr id="trMain">
+
+				<td id="tdWF" align="center">
+				</td>
+			</tr>
+
+			
+			<tr>
+				<td id="tdValores">
+				</td>
+			</tr>
+
+			
+			<tr>
+				<td id="tdModo">
+				</td>
+			</tr>
+
+			
+		</tbody>
+		<tfoot>
+			<tr>
+				<td align="center" colspan="3">
+					&#x00a9JRussi 2016
+				</td>
+			</tr>
+		</tfoot>
+</table>
+
+
+
+<script src="drawSVG.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+var titulo = "Conversor Buck";
+console.log(titulo);
+
+vars = new function () {
+	//this.Vo = {nome:"Vo", valor:50, valores:[10,50,200,400,1000], unidade:"V"};
+	this.E = {nome:"E", valor:100, valores:[100,10,50,200,400,1000], unidade:"V"};
+	this.L = {nome:"L", valor:1e-3, valores:[1e-3,1.1e-3,1.2e-3,1.3e-3,1.4e-3,1.5e-3,1.6e-3,1.7e-3,1.8e-3,1.9e-3,2e-3,2.1e-3,2.2e-3,2.3e-3,2.4e-3,2.5e-3,2.6e-3,2.7e-3,2.8e-3,2.9e-3, 3e-3], unidade:"H"};
+	this.D = {nome:"D", valor:0.5, valores:[0.4, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0], unidade:""};
+	this.R = {nome:"R", valor:50, valores:[50, 10, 20, 30], unidade:"\u2126"};
+	this.fs = {nome:"fs", valor:10e3, valores:[10e3, 50e3, 100e3], unidade:""};
+}
+
+var Vo = 0;
+var ILmed = 0;
+var deltaIL = 0;
+var ganho = "";
+var modo = "";
+var formulaDeltaIL = '';
+var formulaDeltaVC = '';
+
+fun = new function() {
+//----------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+	this.funI_L  = function(theta) {
+		var E  = vars.E .valor;
+		var L  = vars.L .valor;
+		var D  = vars.D .valor;
+		var R  = vars.R .valor;
+		var fs = vars.fs.valor;
+		
+				Vo = E*D;
+		ILmed = Vo/R;
+		deltaIL = 1/L*(E-Vo)*D/fs/2;
+		if (ILmed < deltaIL){
+			var K = 2*L*fs/R;
+			Vo = E*2/(1+Math.sqrt(1+4*K/(D*D)));
+			deltaIL = 1/L*(E-Vo)*D/fs/2;
+			
+			modo = "<b>Modo de condução: </b>MCD";
+			ganho = '';
+		}
+		else{
+			modo = "<b>Modo de condução: </b>MCC";
+			ganho = '';
+		}
+		
+		//console.log(ILmed);
+		//console.log(deltaIL);
+		if (theta<D){
+			return (E-Vo)*theta/(L*fs) + Math.max(ILmed-deltaIL,0);
+		}
+		else{
+			return Math.max(-Vo*theta/(L*fs) + Math.max(ILmed+deltaIL, 2*deltaIL)+Vo*D/(L*fs), 0);
+		}
+	}
+//----------------------------------------------------------------------------------------
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// JavaScript source code goes here
+	
+var cores = [
+	"#FF8B96",//Pink	
+	"#C10430",//Red	
+	"#F68600",//Orange
+	"#82430C",//Brown
+	"#E9BF00",//Yellow
+	"#5E5507",//Olive
+	"#ABC800",//yellow green
+	"#00906C",//Green
+	"#0069A5",//Blue	
+	"#8F00A5",//Purple
+	"#EAEAE9",//White
+	"#878686",//Gray	
+	"#212121",//Black
+	
+	"#FF0000",//vermelho
+	"#00FF00",//verde
+	"#0000FF",//azul
+	"#FF4000",//laranja
+	"#00FFFF",//ciano
+	"#FF00FF",//magenta
+	"#C0C0C0",//cinza claro
+	"#808080",//cinza escuro
+	"#800000",//vermelho escuro
+	"#808000",//amarelo escuro
+	"#008000",
+	"#800080",
+	"#008080",
+	"#000080",
+	"#FFFF00"//amarelo
+];
+
+
+var axesWF = {left: 10,		width: 580,	 top: 10, bottom: 10, height: 380, xmin: 0, xmax: 1.3, ymin: -850, ymax: 450, thickness: 2, ylabel: "", xlabel: "\u03C9t"};
+
+var zoom = {};
+
+var alfa = 0;
+
+var offsetX = 0;
+var offsetY = 0;
+
+var escala = 1;//do esquemático
+	
+
+var axes = {
+	space: 10,
+	left: 10,		width: 580,	 top: 10, bottom: 21, height: 380,
+	sub: []
+}
+
+var styleArrowS = {strokeWidth: 3, stroke: cores[3], fill: cores[3], strokeMiterLimit: 4};
+var styleArcDimS = {strokeWidth: 2, stroke: cores[5], fill: cores[5], strokeMiterLimit: 4};
+var styleAxesS = {strokeWidth: 1, stroke: 'black', fill: 'black'};
+var styleAxesBack = {strokeWidth: 1, fill: "#E0E0E0"};
+var styleGridS = {strokeWidth: 1, stroke: 'gray'};
+var styleLinhaBaseS = {strokeWidth: 4, stroke: cores[8], fill: "none", strokeDasharray:[5, 5]};
+var styleLinhaAnimadaS = {strokeWidth: 4, stroke: cores[8], fill: "none"};
+var styleDotS = {strokeWidth: 1, stroke: 'black', fill: cores[1]};
+var styleLinhaS = {strokeWidth: 3, stroke: 'yellow'};
+var styleTexto = {strokeWidth: 1, stroke: cores[3], fontSize: "20px"};
+
+//var fileJsAtual = document.getElementById("selectTopologia").value;
+
+//svg panel
+var NS="http://www.w3.org/2000/svg";
+var svgSchem=document.createElementNS(NS,"svg");
+//document.getElementById("tdSchem").appendChild(svgSchem);
+
+//svg panel
+var NS="http://www.w3.org/2000/svg";
+var svg = document.createElementNS("http://www.w3.org/2000/svg","svg")
+tdWF.appendChild(svg);
+svg.setAttribute("width", 600);
+svg.setAttribute("height", 400);
+svg.setAttribute("class","svgWFx");
+svg.id = "svgWF";
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+function calcGraphicLimits(funs,xmin,xmax) {
+	var min = 1e99;
+	var max = -1e99;
+	for (var jj=0;jj<funs.length;jj++){
+		for (var ii=xmin;ii<xmax;ii+=(xmax-xmin)/100){
+			var valor = fun[funs[jj]](ii);
+			if (valor > max){
+				max = valor;
+			}
+			if (valor < min){
+				min = valor;
+			}
+		}
+	}
+return {min: min, max: max}	
+}//---------------------------------------------------------------------------------------
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////	
+function init() {
+	//document.getElementById("titulo").innerHTML = titulo;
+	//criarLinhaTabela(0);
+	
+	var keys = Object.keys(vars);
+	for (var ii=0;ii<keys.length;ii++){
+		vars[keys[ii]].valor = vars[keys[ii]].valores[0];
+	}
+	
+	criarSelects("nome", "valores");
+
+	document.addEventListener("keydown", on.keydown, false);
+	
+	on.btnPlayClick();
+	select1.focus();
+}
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+function on() {};
+on.WFWheel = function(params){
+	var elem = params.currentTarget;//srcElement;
+	//alert("wheel");
+	console.log(params);
+	
+	var indice = elem.id.split("_")[1];
+	if (typeof(zoom[indice]) == "undefined"){zoom[indice] = {zoom: 1, offsetX: 0, offsetY: 0};}
+	var z = zoom[indice];
+	
+	x0 = (params.offsetX - z.offsetX)/z.zoom;
+	y0 = (params.offsetY - z.offsetY)/z.zoom;
+	
+	z.zoom = z.zoom + params.wheelDeltaY/1000;
+	if (z.zoom < 1){z.zoom = 1;}
+	var a = z.zoom;	
+	
+	var offsetX = params.offsetX - x0*a;
+	var offsetY = params.offsetY - y0*a;
+	
+	if (offsetX + a*elem.width.baseVal.value < elem.width.baseVal.value){
+		offsetX = (1-a)*elem.width.baseVal.value;
+	}
+	if (offsetY + a*elem.height.baseVal.value < elem.height.baseVal.value){
+		offsetY = (1-a)*elem.height.baseVal.value;
+	}
+	if (offsetX > 0){
+		offsetX = 0;
+	}
+	if (offsetY > 0){
+		offsetY = 0;
+	}
+	
+	z.offsetX = offsetX;
+	z.offsetY = offsetY;
+	console.log(z);
+	
+	console.log(indice);
+	console.log(zoom);
+	console.log(document.getElementById("svgWFg_" + indice));
+	document.getElementById("svgWFg_" + indice).setAttribute('transform', 'translate(' + offsetX + ' ' + offsetY + ') scale(' + a + ')');
+}
+//----------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+on.selectClick = function(params){
+	clearInterval(interval);
+	document.getElementById("selectTopologia").blur();
+	var fileJs = document.getElementById("selectTopologia").value;
+	if (typeof(params) == "undefined") {
+		replacejscssfile(fileJsAtual, fileJs, "js");
+		fileJsAtual = document.getElementById("selectTopologia").value;
+	}
+	else{
+		el = 0;
+		el = setEl();//carrega esquemático
+		//console.log(document.getElementsByClassName("linhaCriada"))
+		var keys = document.getElementsByClassName("colunaCriada");
+		for (var ii=keys.length-1;ii>=0;ii--){
+			keys[ii].parentNode.removeChild(keys[ii]);
+		}
+		var keys = document.getElementById("tdValores").childNodes;
+		for (var ii=keys.length-1;ii>=0;ii--){
+			keys[ii].parentNode.removeChild(keys[ii]);
+		}
+		
+		init();
+	}
+}
+//----------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+on.keydown = function(event){
+	switch (event.keyCode){
+		case 37: {// <-
+			on.btnPreviousClick();
+			break;
+		}
+		case 39: {// ->
+			on.btnNextClick();
+			break;
+		}
+		case 38: {// upArrow
+			on.btnPlayClick();
+			break;
+		}
+		case 40: {// downArrow
+			on.btnStopClick();
+			break;
+		}
+		case 65: {// a,A
+			on.btnAddGraphicClick();
+			break;
+		}
+		default: {
+		}
+	}
+}
+//----------------------------------------------------------------------------------------
+on.btnPlayClick = function(){
+	alfa = 1;
+	drawAll();
+}
+//----------------------------------------------------------------------------------------
+on.btnStopClick = function(){
+	clearInterval(interval);
+}
+//----------------------------------------------------------------------------------------
+on.btnNextClick = function() {
+	alfa += Math.PI/36;
+	if (alfa >= 1) {
+		alfa = 1;
+	}
+	drawAll();
+}
+//----------------------------------------------------------------------------------------
+on.btnPreviousClick = function(){
+	alfa -= Math.PI/36;
+	if (alfa < 0) {
+		alfa = 0;
+	}
+	drawAll();
+}
+//----------------------------------------------------------------------------------------
+on.btnAddGraphicClick = function(){
+	//criarLinhaTabela(document.getElementsByClassName("svgWF").length);
+	//drawAll();
+}
+//----------------------------------------------------------------------------------------
+on.selectChanged = function(event){
+	vars[event.srcElement.name].valor = Number(event.srcElement.value);
+	drawAll();
+}
+//----------------------------------------------------------------------------------------
+on.checkboxChange = function(event) {drawAll();};
+//----------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+function criarSelects(){
+	//selects
+	var keys = Object.keys(vars);
+	for (var ii=0;ii<keys.length;ii++){
+		var itemEnviar = {element:"div", style:{display: "inline-block", width: "190px"}, nested: [
+			{element:"textNode", innerHTML:vars[keys[ii]].nome+" = "},
+			{element:"select", id:"select"+ii, name:vars[keys[ii]].nome, onchange: on.selectChanged},
+			{element:"textNode", innerHTML:vars[keys[ii]].unidade}
+		]};
+		document.getElementById("tdValores").appendChild(criarHTML(itemEnviar));
+		//opções
+		var keys2 = Object.keys(vars[keys[ii]].valores);
+		for (var jj=0;jj<keys2.length;jj++){
+			var itemEnviar = {element:"option", value:vars[keys[ii]].valores[keys2[jj]], innerHTML: vars[keys[ii]].valores[keys2[jj]]};
+			document.getElementById("select"+ii).appendChild(criarHTML(itemEnviar));
+		}
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+function criarLinhaTabela(indice){
+	var itemEnviar = {
+		element:"td", id:"tdWF"+indice, className: "colunaCriada"
+	};
+	document.getElementById("trWF").appendChild(criarHTML(itemEnviar));
+	
+	var svg = document.createElementNS("http://www.w3.org/2000/svg","svg")
+	
+	document.getElementById("tdWF"+indice).appendChild(svg);
+	svg.setAttribute("width", 550);
+	svg.setAttribute("height", 350);
+	svg.setAttribute("class","svgWF");
+	svg.id = "svgWF_"+indice;
+	svg.onwheel = on.WFWheel;
+	svg.onmousedown = on.WFMousedown;
+	svg.onmouseup = on.WFMouseup;
+	
+	var itemEnviar = {
+		element:"td", className: "colunaCriada", nested: [
+			{element:"textNode", innerHTML:"<b>Mostrar formas de onda:</b>"},
+			{element:"form", style:{webkitColumnCount:"3", MozColumnCount:"3"}, action:"", id:"form" + indice}
+		]
+	};
+	document.getElementById("trCheckboxes").appendChild(criarHTML(itemEnviar));
+
+	criarCheckboxes(indice);
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////	
+function drawAll(){
+	// desenhar formas de onda
+	
+	clearSVG(svgWF);
+	calcMultiAxes();
+	drawMultiAxesFunction(alfa);
+	
+	document.getElementById("tdModo").innerHTML = modo;
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+function calcTicks(axes){
+	var ymax = axes.ymax;
+	var ymin = axes.ymin;
+	//calcular escala automaticamente
+	ymax = Math.max(ymax,0);
+	ymin = Math.min(ymin,0);
+	var escala = 1;
+	var escalas = [1, 1.5, 2, 3, 4, 5, 6, 7.5, 8];
+	//var escalasDivs = [{1, 0.5},{]
+	//encontrar o maior limite
+	var maxLimite = Math.max(Math.abs(ymax), Math.abs(ymin));
+	//encontrar a escala máxima para maxLimite
+	for (var ii=0; escalas[ii]<maxLimite; ii++){
+		//ampliar possibilidades usando múltiplos de 10x
+		escalas.push(escalas[ii]*10);
+		//console.log(escalas);
+		escala = escalas[ii];
+	}
+	//calcula o número de divisoes para maxLimite
+	if ((escala/3).toFixed(2)*3==escala){
+		var divisoes = 3;
+		escala /= divisoes;
+	}
+	else {
+		var divisoes = 2;
+		escala /= divisoes;
+	}
+	
+	//gerar ticks vertical
+	var y = [];
+	for (var ii=escala; ii<=ymax; ii+=escala){
+		y.push(ii);
+	}
+	for (var ii=-escala; ii>=ymin; ii-=escala){
+		y.push(ii);
+	}
+	//gerar ticks horizontal
+	var x = [];
+	for (var ii=0.25; ii<=1; ii+=0.25){
+		x.push(ii);
+	}
+	axes.tick = {x:x, y:y};
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+function calcGrid(axes){
+	var ymax = axes.ymax;
+	var ymin = axes.ymin;
+	//calcular escala automaticamente
+	ymax = Math.max(ymax,0);
+	ymin = Math.min(ymin,0);
+	var escala = 1;
+	var escalas = [1, 1.5, 2, 3, 4, 5, 6, 7.5, 8];
+	for (var ii=0;Math.ceil(ymax/escalas[ii])-Math.floor(ymin/escalas[ii]) > 6;ii++){
+		escalas.push(escalas[ii]*10);
+		//console.log(escalas);
+		escala = escalas[ii];
+	}
+	//gerar grid vertical
+	var y = [];
+	for (var ii=Math.floor(ymin/escala)*escala;ii<=Math.ceil(ymax/escala)*escala;ii+=escala){
+		y.push(ii);
+	}
+	//gerar grid horizontal
+	var x = [];
+	for (var ii=0;ii<=Math.PI*2;ii+=Math.PI/4){
+		x.push(ii);
+	}
+	axes.grid = {x:x, y:y, escalaX: "\u03C0/4", escalaY: escala};
+}
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+Object.prototype.addProperties = function(options, options2) {
+	var keys = Object.keys(options);
+	for (var ii=0;ii<keys.length;ii++){
+		this[keys[ii]] = options[keys[ii]];
+	}
+	if (typeof(options2) !== "undefined"){
+		var keys = Object.keys(options2);
+		for (var ii=0;ii<keys.length;ii++){
+			this[keys[ii]] = options2[keys[ii]];
+		}
+	}
+	return this;
+}
+Object.defineProperty(fun, 'addProperties', {
+  enumerable: false
+});
+//////////////////////////////////////////////////////////////////////////////////////////
+function criarHTML(obj,parentObj) {
+	var a = obj.constructor;
+	if (obj.constructor === Array) {// se array então processa os itens
+		var keys = Object.keys(obj);
+		for (var i = 0; i < keys.length; i++) {
+			parentObj.appendChild(criarHTML(obj[keys[i]],element));
+		}
+	}
+	else {
+		var keys = Object.keys(obj);
+		for (var i = 0; i < keys.length; i++) {
+			if (i==0) {
+				var element = document.createElement(obj.element);
+			}
+			if ((keys[i] !== "element") && (keys[i] !== "nested") && (keys[i] !== "style")) {
+				element[keys[i]] = obj[keys[i]];
+			}
+			if (keys[i] == "nested") {
+				var newObj = criarHTML(obj.nested,element);
+				var temp = typeof(newObj);
+				if (typeof(newObj) !== "undefined") {
+					element.appendChild(newObj);
+				}
+			}
+			if (keys[i] == "style") {
+				var keys2 = Object.keys(obj.style);
+				for (j=0;j<=keys2.length;j++){
+					element.style[keys2[j]] = obj.style[keys2[j]];
+				}
+				color = "blue";//obj[keys[i]];
+			}
+		}//for
+	}
+	return element;
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////
+function clearSVG(svg){
+	var keys = Object.keys(svg.childNodes);
+	for (var ii=keys.length-1;ii>=0;ii--){
+		svg.removeChild(svg.childNodes[keys[ii]]);
+	}
+}
+
+
+calcMultiAxes();
+drawMultiAxesFunction(1);
+
+function calcMultiAxes(){
+	//calcular y total e criar os dados das formas de ondas para os eixos
+	var ytotal = 0;
+	var keys = Object.keys(fun);
+	for (var ii=0;ii<keys.length;ii++){
+		
+		axes.sub.push({});
+		axes.sub[ii].nome = keys[ii];
+		axes.sub[ii].fun = fun[keys[ii]];
+		axes.sub[ii].ylabel = keys[ii].replace("fun","");
+		axes.sub[ii].xlabel = "DTs";
+		
+		axes.sub[ii].xmin = 0;
+		axes.sub[ii].xmax = 1.1;
+		var limits = calcGraphicLimits([axes.sub[ii].nome],axes.sub[ii].xmin,axes.sub[ii].xmax);
+		axes.sub[ii].yescala = Math.max(Math.abs(limits.max),Math.abs(limits.min),0);
+		axes.sub[ii].ymin = Math.min(limits.min,0)/axes.sub[ii].yescala;
+		axes.sub[ii].ymax = Math.max(limits.max,0)/axes.sub[ii].yescala;
+		
+		ytotal += axes.sub[ii].ymax - axes.sub[ii].ymin;
+	}
+	//console.log(ytotal)
+
+	var a = (axes.height - (keys.length+1)*axes.space)/ytotal;
+	//axes.sub[0].height = (axes.sub[0].ymax - axes.sub[0].ymin)*a;
+	
+	//calcula as posições dos sub eixos
+	var ytotal = axes.top;
+	for (var ii=0;ii<keys.length;ii++){
+		ytotal += axes.space;
+		
+		axes.sub[ii].top = ytotal;
+		axes.sub[ii].left = axes.left + axes.space*3;
+		axes.sub[ii].height = (axes.sub[ii].ymax - axes.sub[ii].ymin)*a;
+		axes.sub[ii].width = axes.width - 2*axes.space;
+		
+		axes.sub[ii].ymax *= axes.sub[ii].yescala;
+		axes.sub[ii].ymin *= axes.sub[ii].yescala;
+		
+		calcTicks(axes.sub[ii]);
+		
+		ytotal += axes.sub[ii].height;
+	}
+}
+
+
+function drawMultiAxesFunction(xmax){
+	//draw the graphs
+	var keys = Object.keys(fun);
+	for (var ii=0;ii<keys.length;ii++){
+		drawSVG.Rect(svgWF, styleAxesBack, axes.sub[ii].left, axes.sub[ii].top, axes.sub[ii].width, axes.sub[ii].height);
+		drawSVG.Axes(svgWF, styleAxesS, axes.sub[ii]);
+		
+		var style = addProperties({},styleLinhaAnimadaS,{stroke: cores[ii]});
+		var elem = drawSVG.Equation(svgWF,style,axes.sub[ii],{func: axes.sub[ii].fun, xmin: axes.sub[ii].xmin, xmax: xmax});
+		elem.id = "eq_" + ii;
+
+		var limits = calcGraphicLimits([axes.sub[ii].nome],0,1);
+		
+		//draw current limits
+		//min
+		drawSVG.Line(svgWF,styleLinhaBaseS,axes.sub[ii],calc.X0(axes.sub[ii]),calc.Y1(axes.sub[ii],limits.min),calc.X1(axes.sub[ii],1),calc.Y1(axes.sub[ii],limits.min));
+		//max
+		drawSVG.Line(svgWF,styleLinhaBaseS,axes.sub[ii],calc.X0(axes.sub[ii]),calc.Y1(axes.sub[ii],limits.max),calc.X1(axes.sub[ii],1),calc.Y1(axes.sub[ii],limits.max));
+		//ilmed
+		drawSVG.Line(svgWF,styleLinhaBaseS,axes.sub[ii],calc.X0(axes.sub[ii]),calc.Y1(axes.sub[ii],ILmed),calc.X1(axes.sub[ii],1),calc.Y1(axes.sub[ii],ILmed));
+		
+		//draw arrows and text
+		drawSVG.Arrow(svgWF,styleArrowS,axes.sub[ii],{x0:0.65, y0:0, x1:0.65, y1:ILmed});
+		drawSVG.Arrow(svgWF,styleArrowS,axes.sub[ii],{x0:1.03, y0:(limits.max+limits.min)/2, x1:1.03, y1:0});
+		drawSVG.Arrow(svgWF,styleArrowS,axes.sub[ii],{x0:1.03, y0:(limits.max+limits.min)/2, x1:1.03, y1:limits.max});
+		drawSVG.Text(svgWF,styleTexto, "ILMed", calc.X1(axes.sub[ii],0.66), calc.Y1(axes.sub[ii],(limits.max+limits.min)/4));
+		drawSVG.Text(svgWF,styleTexto, "&#916;I_L", calc.X1(axes.sub[ii],0.95), calc.Y1(axes.sub[ii],(limits.max+limits.min)/1.5));
+		
+		
+		drawSVG.Arrow(svgWF,styleArrowS,axes.sub[ii],{x0:calc.X1(axes.sub[ii],0.5), y0:calc.Y0(axes.sub[ii]), x1:calc.X1(axes.sub[ii],0.5), y1:calc.Y1(axes.sub[ii],(limits.max+limits.min)/2)});
+		
+		var style = addProperties({},styleDotS,{fill: cores[ii]});
+		drawSVG.Dot(svgWF,style, axes.sub[ii], alfa, fun[axes.sub[ii].nome](alfa));
+	}
+	
+}
+
+
+</script>
+<link rel="stylesheet" type="text/css" href="mathquill/mathquill.css">
+
+</body>
+</html>
